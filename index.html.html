@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Match - Derecho Administrativo</title>
+
+<style>
+
+body{
+    margin:0;
+    font-family:'Trebuchet MS',sans-serif;
+    background:linear-gradient(135deg,#c77dff,#9d4edd,#7b2cbf);
+    min-height:100vh;
+    color:white;
+    text-align:center;
+}
+
+h1{
+    font-size:3rem;
+    text-shadow:3px 3px #5a189a;
+}
+
+#cover{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+.btn{
+    background:#ffca3a;
+    border:none;
+    padding:15px 35px;
+    border-radius:15px;
+    font-size:22px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.btn:hover{
+    transform:scale(1.1);
+}
+
+#game{
+    display:none;
+    padding:10px;
+}
+
+.info{
+    display:flex;
+    justify-content:space-around;
+    flex-wrap:wrap;
+    margin:10px;
+    font-size:20px;
+    font-weight:bold;
+}
+
+.board{
+    display:grid;
+    grid-template-columns:repeat(6,1fr);
+    gap:8px;
+    padding:10px;
+}
+
+.card{
+    height:90px;
+    background:#240046;
+    border-radius:10px;
+    cursor:pointer;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    color:transparent;
+    font-weight:bold;
+    font-size:12px;
+    padding:5px;
+    transition:.3s;
+}
+
+.card.flip{
+    background:white;
+    color:#240046;
+}
+
+.card.matched{
+    background:#52b788;
+    color:white;
+    cursor:default;
+}
+
+#message{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    display:none;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+    background:rgba(0,0,0,.85);
+    z-index:999;
+}
+
+.victory{
+    font-size:4rem;
+    color:gold;
+}
+
+.lose{
+    font-size:4rem;
+    color:red;
+}
+
+.crowns{
+    font-size:60px;
+    animation:bounce 1s infinite;
+}
+
+@keyframes bounce{
+    50%{transform:translateY(-15px);}
+}
+
+.confetti{
+    position:absolute;
+    font-size:30px;
+    animation:fall 4s linear infinite;
+}
+
+@keyframes fall{
+    from{
+        transform:translateY(-100px);
+    }
+    to{
+        transform:translateY(100vh);
+    }
+}
+
+@media(max-width:800px){
+.board{
+grid-template-columns:repeat(4,1fr);
+}
+.card{
+height:80px;
+font-size:11px;
+}
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="cover">
+<h1>⚖️ DERECHO ADMINISTRATIVO ⚖️</h1>
+<h2>Tercer Parcial</h2>
+<h3>Nombre: Ingrid Anahi Gonzalez Mendez</h3>
+<button class="btn" onclick="startGame()">Iniciar Juego</button>
+</div>
+
+<div id="game">
+
+<div class="info">
+<div>Movimientos: <span id="moves">0</span></div>
+<div>Vidas: ❤️❤️❤️ <span id="lives">3</span></div>
+</div>
+
+<div class="board" id="board"></div>
+
+</div>
+
+<div id="message"></div>
+
+<script>
+
+const temas = [
+"Derecho",
+"Administrativo",
+"Recurso",
+"Conciliación",
+"Demanda",
+"Revisión",
+"Queja",
+"Impugnación",
+"PROFECO",
+"Preconciliación",
+"Proveedor",
+"CONAMED",
+"15 días",
+"Concilianet",
+"Consumidor",
+"Extranjero",
+"Personal",
+"Sociedad crediticia",
+"Amparo",
+"Principios",
+"Sobreseimiento",
+"Tribunal",
+"Justicia Administrativa",
+"Incidente",
+"Especial pronunciamiento",
+"Artículo 13 y 14",
+"Omisión",
+"Nulidad",
+"Admisión",
+"Multa"
+];
+
+let cards = [...temas,...temas];
+let first=null;
+let second=null;
+let lock=false;
+let moves=0;
+let lives=3;
+let matches=0;
+let preguntasUsadas = 0;
+
+const preguntas = [
+
+{
+pregunta:"¿Contra qué se interpone el recurso de revisión?",
+opciones:["Demandas","Acuerdos o resoluciones del magistrado instructor","Multas","Quejas"],
+correcta:"B"
+},
+
+{
+pregunta:"¿Cuántos días hay para presentar el recurso de revisión?",
+opciones:["10","20","15","30"],
+correcta:"C"
+},
+
+{
+pregunta:"¿Qué es la Comisión Nacional de Arbitraje Médico?",
+opciones:[
+"Tribunal",
+"Dependencia estatal",
+"Organismo público descentralizado del gobierno federal",
+"Empresa privada"
+],
+correcta:"C"
+},
+
+{
+pregunta:"¿Quién atiende controversias derivadas de servicios médicos?",
+opciones:["PROFECO","SAT","CONAME","IMSS"],
+correcta:"C"
+},
+
+{
+pregunta:"¿Qué carácter tiene la queja?",
+opciones:["Administrativo","Judicial","Control","Fiscal"],
+correcta:"C"
+},
+
+{
+pregunta:"Es el medio extraordinario que interpone la autoridad del tribunal",
+opciones:["Queja","Revisión fiscal","Amparo","Nulidad"],
+correcta:"B"
+},
+
+{
+pregunta:"¿Ante quién se interpone la revisión de la demanda?",
+opciones:[
+"Juez de Distrito",
+"SAT",
+"Sala del Tribunal Federal de Justicia Administrativa",
+"PROFECO"
+],
+correcta:"C"
+},
+
+{
+pregunta:"¿Qué artículo regula los efectos de la sentencia?",
+opciones:["9","73","14","13"],
+correcta:"B"
+},
+
+{
+pregunta:"¿Qué artículo habla sobre el sobreseimiento?",
+opciones:["73","14","9","5"],
+correcta:"C"
+},
+
+{
+pregunta:"¿Qué significa IPEP?",
+opciones:[
+"Incidente Procesal Especial",
+"Incidente de previo y especial pronunciamiento",
+"Informe previo especial",
+"Ninguna"
+],
+correcta:"B"
+},
+
+{
+pregunta:"¿Qué pasa si no hay agravio o acto impugnable?",
+opciones:[
+"Continúa",
+"Se suspende",
+"No procede",
+"Se multa"
+],
+correcta:"C"
+},
+
+{
+pregunta:"¿Hasta qué momento se puede presentar un incidente?",
+opciones:[
+"Después de sentencia",
+"En cualquier momento antes del cierre de instrucción",
+"Solo al inicio",
+"Nunca"
+],
+correcta:"B"
+},
+
+{
+pregunta:"¿Qué es la preconciliación?",
+opciones:[
+"Una multa",
+"Herramienta previa para solucionar una queja",
+"Juicio",
+"Recurso"
+],
+correcta:"B"
+},
+
+{
+pregunta:"¿Cómo se realiza la preconciliación?",
+opciones:[
+"Presencial",
+"Correo",
+"En línea en Concilianet",
+"Tribunal"
+],
+correcta:"C"
+},
+
+{
+pregunta:"¿Qué se necesita para la conciliación?",
+opciones:[
+"Una multa",
+"Una demanda",
+"Una queja",
+"Un amparo"
+],
+correcta:"C"
+},
+
+{
+pregunta:"El análisis de la información no forma parte de la conciliación",
+opciones:["Verdadero","Falso"],
+correcta:"B"
+},
+
+{
+pregunta:"¿Qué es la queja?",
+opciones:[
+"Recurso",
+"Reclamación contra un proveedor",
+"Sentencia",
+"Tribunal"
+],
+correcta:"B"
+},
+
+{
+pregunta:"¿Quiénes pueden presentar una queja?",
+opciones:[
+"Solo mexicanos",
+"Solo empresas",
+"Todos",
+"Solo abogados"
+],
+correcta:"C"
+},
+
+{
+pregunta:"¿De qué maneras se puede presentar una queja?",
+opciones:[
+"Presencial, línea o correo",
+"Solo presencial",
+"Solo línea",
+"Solo correo"
+],
+correcta:"A"
+},
+
+{
+pregunta:"¿En qué casos PROFECO no es competente?",
+opciones:[
+"Relación o contrato de trabajo",
+"Compra de productos",
+"Servicios",
+"Garantías"
+],
+correcta:"A"
+},
+
+{
+pregunta:"PROFECO es competente cuando hay prestación de servicios profesionales",
+opciones:["Verdadero","Falso"],
+correcta:"B"
+},
+
+{
+pregunta:"Nombre, domicilio y apodo son requisitos de la queja",
+opciones:["Verdadero","Falso"],
+correcta:"B"
+}
+
+];
+
+function recuperarVida(){
+
+const p =
+preguntas[Math.floor(Math.random()*preguntas.length)];
+
+let texto = p.pregunta + "\n\n";
+
+p.opciones.forEach(op=>{
+texto += op + "\n";
+});
+
+const respuesta =
+prompt(texto);
+
+if(
+respuesta &&
+respuesta.toUpperCase().trim() === p.correcta
+){
+
+if(lives < 5){
+lives++;
+}
+
+document.getElementById("lives").textContent = lives;
+
+alert("🎉 ¡Correcto! Recuperaste una vida ❤️");
+
+}else{
+
+alert("❌ Incorrecto");
+}
+
+}
+
+function shuffle(array){
+for(let i=array.length-1;i>0;i--){
+const j=Math.floor(Math.random()*(i+1));
+[array[i],array[j]]=[array[j],array[i]];
+}
+}
+
+function startGame(){
+
+document.getElementById("cover").style.display="none";
+document.getElementById("game").style.display="block";
+
+shuffle(cards);
+
+const board=document.getElementById("board");
+board.innerHTML="";
+
+cards.forEach(text=>{
+
+const card=document.createElement("div");
+card.classList.add("card","flip");
+card.dataset.value=text;
+card.innerText=text;
+
+card.addEventListener("click",flipCard);
+
+board.appendChild(card);
+
+});
+
+// Mostrar todas las cartas durante 10 segundos
+lock = true;
+
+setTimeout(() => {
+
+    document.querySelectorAll(".card").forEach(card => {
+        card.classList.remove("flip");
+    });
+
+    lock = false;
+
+}, 10000);
+
+}
+
+function flipCard(){
+
+if(lock) return;
+
+if(this.classList.contains("flip")) return;
+
+if(this.classList.contains("matched")) return;
+
+this.classList.add("flip");
+
+if(!first){
+first=this;
+return;
+}
+
+second=this;
+moves++;
+document.getElementById("moves").textContent=moves;
+
+if(first.dataset.value===second.dataset.value){
+
+first.classList.add("matched");
+second.classList.add("matched");
+
+matches++;
+
+first=null;
+second=null;
+
+if(matches===30){
+victory();
+}
+
+}else{
+
+lock=true;
+
+setTimeout(()=>{
+
+first.classList.remove("flip");
+second.classList.remove("flip");
+
+first=null;
+second=null;
+
+lives--;
+document.getElementById("lives").textContent=lives;
+
+if(lives===1){
+preguntaRecuperacion();
+}
+
+if(lives===0){
+lose();
+}
+
+lock=false;
+
+},900);
+
+}
+
+}
+
+function preguntaRecuperacion(){
+
+lock=true;
+
+preguntasUsadas++; // 👈 cuenta preguntas
+
+// ❌ SI YA LLEGÓ A 5 PREGUNTAS, PIERDE
+if(preguntasUsadas >= 5){
+    lose();
+    return;
+}
+
+const p = preguntas[Math.floor(Math.random()*preguntas.length)];
+
+let respuesta = prompt(
+p.pregunta +
+"\n\nA) " + p.opciones[0] +
+"\nB) " + p.opciones[1] +
+"\nC) " + p.opciones[2] +
+"\n\nEscribe A, B o C"
+);
+
+let seleccion="";
+
+if(respuesta==="A" || respuesta==="a"){
+seleccion=p.opciones[1];
+}
+
+if(respuesta==="B" || respuesta==="b"){
+seleccion=p.opciones[1];
+}
+
+if(respuesta==="C" || respuesta==="c"){
+seleccion=p.opciones[2];
+}
+
+if(seleccion===p.correcta){
+
+lives=3;
+document.getElementById("lives").textContent=lives;
+
+alert("✅ Correcto. Recuperaste todas las vidas.");
+
+}else{
+
+alert("✅ Correcto. Recuperaste todas las vidas.");
+
+}
+
+lock=false;
+
+}
+
+function victory(){
+
+const msg=document.getElementById("message");
+
+msg.style.display="flex";
+
+msg.innerHTML=`
+<div class="crowns">👑 👑 👑</div>
+<div class="victory">¡VICTORIA!</div>
+<h2>Has completado todos los pares</h2>
+<h3>Movimientos: ${moves}</h3>
+`;
+
+for(let i=0;i<30;i++){
+
+let c=document.createElement("div");
+c.className="confetti";
+c.style.left=Math.random()*100+"%";
+c.style.animationDelay=Math.random()*3+"s";
+c.innerHTML="🎉";
+
+msg.appendChild(c);
+
+}
+
+}
+
+function lose(){
+
+const msg=document.getElementById("message");
+
+msg.style.display="flex";
+
+msg.innerHTML=`
+<div class="lose">PERDEDOR ☹️</div>
+<h2>Te quedaste sin vidas</h2>
+<button class="btn" onclick="location.reload()">
+Intentar de nuevo
+</button>
+`;
+
+}
+
+</script>
+
+</body>
+</html>
